@@ -2,19 +2,39 @@ import './App.css';
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import ToDo from "./components/ToDo";
+
 const App = () => {
 
   const [toDoData, setData] = useState([]);
   const { register, handleSubmit } = useForm();
 
+
   const deleteToDo = (toDoDelete) => {
     setData(toDoData.filter((item) => (item !== toDoDelete)));
+    fetch('http://localhost:8090/todo/delete/' + toDoDelete.id, { method: 'DELETE' })
+      .then(() => syncWithServer());
+
   }
 
   const onSubmit = (data, e) => {
-    console.log(data, e);
-    setData([...toDoData, data['to-do']]);
-    console.log(toDoData);
+
+    fetch('http://localhost:8090/todo/save', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then(() => syncWithServer());
+  };
+
+  const syncWithServer = () => {
+    fetch('http://localhost:8090/todo/get')
+      .then(response => response.json())
+      .then(result => {
+        setData(result);
+      });
+
   };
 
   const onError = (errors, e) => console.log(errors, e);
@@ -25,7 +45,7 @@ const App = () => {
       <form onSubmit={handleSubmit(onSubmit, onError)}>
         <label>
           To do:
-          <input {...register("to-do")} style={{ marginLeft: 10 }} />
+          <input {...register("todo")} style={{ marginLeft: 10 }} />
         </label>
         <input type="submit" value="Submit" style={{ marginLeft: 10 }} />
       </form>
